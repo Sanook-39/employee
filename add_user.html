@@ -209,7 +209,7 @@ document.getElementById('addEmployeeForm').addEventListener('submit', function(e
 
     // If employeeId exists, we're updating, otherwise adding
     const url = employeeId ? '/employee/api/update_employee.php' : '/employee/api/add_employee.php';
-    const method = employeeId ? 'POST' : 'POST';
+    const method = employeeId ? 'PUT' : 'POST';
 
     fetch(url, {
         method: method,
