@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User - Employee Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- <h1>Employee Management</h1> -->
+
+    <div id="login-status"></div>
+    <h1>จัดการข้อมูลพนักงาน</h1>
+    <button id="logout-btn" class="btn btn-danger">Logout</button>
+
+   <!-- Form for adding employee -->
+   <form id="addEmployeeForm">
+    <div class="container">
+        <div class="row">
+            <!-- First Name -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" name="first_name" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Last Name -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" name="last_name" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Gender -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="gender">Gender:</label>
+                    <select id="gender" name="gender" class="form-control" required>
+                        <option value="ชาย">ชาย</option>
+                        <option value="หญิง">หญิง</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Position -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="position">Position:</label>
+                    <select id="position" name="position" class="form-control" required>
+                        <!-- Positions will be dynamically loaded from the API -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Birthdate -->
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label for="birthdate">Birthdate:</label>
+                    <input type="date" id="birthdate" name="birthdate" class="form-control" required>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-md-4">
+                <div class="form-group" style="padding-top: 25px;">
+                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="container" style="text-align:right">
+<div class="row" style="padding-top: 50px;">
+    <div class="col-md-8"></div>
+    <div class="col-md-2">
+        <div class="form-group" >
+            <input type="text" id="searchInput" placeholder="Search by Name or Position" class="form-control">
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="form-group">
+    <button id="searchBtn" class="btn btn-primary">Search</button>
+</div>
+    </div>
+</div>
+</div>
+
+    <!-- Employee Table -->
+    <div class="container mt-11" style="padding-top: 50px;">
+    <table id="employee-table" border="1" class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Position</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Employee data will be displayed here -->
+        </tbody>
+    </table>
+    </div>
+
+    <script>
+const jwt = localStorage.getItem('jwt');
+if (!jwt) {
+    window.location.href = 'index.html'; // Redirect to login page if no JWT
+} else {
+    document.getElementById('login-status').innerText = '';//Logged in successfully
+    // Load employee data
+    fetchEmployees();
+    // Load positions for select
+    fetchPositions();
+}
+
+// Fetch employee data
+function fetchEmployees() {
+    fetch('get_employees.php', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${jwt}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data.employees) {
+            const tableBody = document.querySelector('#employee-table tbody');
+            tableBody.innerHTML = '';
+            data.employees.forEach(employee => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee.id}</td>
+                    <td>${employee.first_name}</td>
+                    <td>${employee.last_name}</td>
+                    <td>${employee.position_name}</td>
+                    <td>
+                        <button onclick="editEmployee(${employee.id})">Edit</button>
+                        <button onclick="deleteEmployee(${employee.id})">Delete</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        } else {
+            alert('No employees found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching employees:', error);
+        alert('Failed to fetch employees.');
+    });
+}
+
+// Fetch positions for the position dropdown
+function fetchPositions() {
+    fetch('get_positions.php', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${jwt}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const positionSelect = document.getElementById('position');
+        if (data && data.position) {
+            data.position.forEach(position => {
+                const option = document.createElement('option');
+                option.value = position.id;
+                option.textContent = position.position_name;
+                positionSelect.appendChild(option);
+            });
+        } else {
+            alert('No positions found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching positions:', error);
+        alert('Failed to load positions.');
+    });
+}
+
+// Add or Update employee
+document.getElementById('addEmployeeForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+
+    const employeeId = event.target.dataset.employeeId; // Check if it's an update
+
+    // If employeeId exists, we're updating, otherwise adding
+    const url = employeeId ? 'update_employee.php' : 'add_employee.php';
+    const method = employeeId ? 'POST' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Authorization': `Bearer ${jwt}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ id: employeeId, ...data })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(employeeId ? 'Employee updated successfully!' : 'Employee added successfully!');
+            fetchEmployees();  // Refresh employee list
+            resetForm(); // Reset form fields
+        } else {
+            alert('Failed to add/update employee: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding/updating employee:', error);
+        alert('Failed to add/update employee.');
+    });
+});
+
+// Edit employee function
+function editEmployee(id) {
+    fetch(`get_employee_edit.php?id=${id}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${jwt}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.employee) {
+            // Populate the form with employee data for editing
+            document.getElementById('firstName').value = data.employee.first_name;
+            document.getElementById('lastName').value = data.employee.last_name;
+            document.getElementById('gender').value = data.employee.gender;
+            document.getElementById('position').value = data.employee.position;
+            document.getElementById('birthdate').value = data.employee.birth_date;
+            
+            // Change form to "Update"
+            document.getElementById('addEmployeeForm').dataset.employeeId = id;
+            document.querySelector('button[type="submit"]').textContent = 'Update Employee';
+        } else {
+            alert('Employee not found!');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching employee data:', error);
+        alert('Failed to fetch employee data.');
+    });
+}
+
+// Delete employee function
+function deleteEmployee(id) {
+    if (confirm('Are you sure you want to delete this employee?')) {
+        fetch(`delete_employee.php?id=${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${jwt}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Employee deleted');
+                fetchEmployees();  // Refresh employee list
+            } else {
+                alert('Failed to delete employee: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting employee:', error);
+            alert('Failed to delete employee.');
+        });
+    }
+}
+// ค้นหาพนักงานจาก API
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (searchTerm) {
+        searchEmployees(searchTerm);
+    } else {
+        alert('Please enter a search term');
+    }
+});
+
+// ค้นหาพนักงานจาก API
+document.getElementById('searchBtn').addEventListener('click', function() {
+    const searchTerm = document.getElementById('searchInput').value.trim();
+    if (searchTerm) {
+        searchEmployees(searchTerm);
+    } else {
+        alert('Please enter a search term');
+    }
+});
+
+// ฟังก์ชันค้นหาพนักงาน
+function searchEmployees(searchTerm) {
+    fetch(`search_employees.php?search=${searchTerm}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${jwt}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert('Unauthorized. Please login again.');
+                window.location.href = 'index.html';
+            }
+            throw new Error('Failed to search employees');
+        }
+        return response.json();
+    })
+    .then(data => {
+        displayEmployees(data);
+    })
+    .catch(error => {
+        console.error('Error searching employees:', error);
+        alert('Failed to search employees.');
+    });
+}
+
+// ฟังก์ชันแสดงข้อมูลพนักงานในตาราง
+function displayEmployees(data) {
+    const tableBody = document.querySelector('#employee-table tbody');
+    tableBody.innerHTML = ''; // เคลียร์ข้อมูลเก่า
+    if (data && data.employees) {
+        data.employees.forEach(employee => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${employee.id}</td>
+                <td>${employee.first_name}</td>
+                <td>${employee.last_name}</td>
+                <td>${employee.position_name}</td>
+                <td>
+                    <button onclick="editEmployee(${employee.id})">Edit</button>
+                    <button onclick="deleteEmployee(${employee.id})">Delete</button>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } else {
+        alert('No employees found.');
+    }
+}
+
+
+
+// Reset form after adding or updating
+function resetForm() {
+    document.getElementById('addEmployeeForm').reset();
+    document.getElementById('searchInput').value = ''; 
+    document.getElementById('addEmployeeForm').dataset.employeeId = ''; // Clear dataset
+    document.querySelector('button[type="submit"]').textContent = 'Add Employee'; // Reset button text
+}
+function logout() {
+    // Remove JWT token from localStorage
+    localStorage.removeItem('jwt');
+
+    // Redirect to the login page
+    window.location.href = 'index.html';
+}
+
+// You can call this function when the user clicks on a logout button
+document.getElementById('logout-btn').addEventListener('click', logout);
+
+    </script>
+    
+</body>
+</html>

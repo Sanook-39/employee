@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User - Employee Management</title>
+    <link rel="stylesheet" href="styles.css"> <!-- หากมีการใช้สไตล์ -->
+</head>
+<body>
+    <h1>Employee Management</h1>
+
+    <!-- ตรวจสอบการเข้าสู่ระบบ -->
+    <div id="login-status"></div>
+
+    <button id="add-employee-btn">Add Employee</button>
+    <h1>Add Employee</h1>
+
+    <!-- Form for adding employee -->
+    <form id="addEmployeeForm">
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="first_name" required><br><br>
+
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="last_name" required><br><br>
+
+        <label for="gender">Gender:</label>
+        <select id="gender" name="gender" required>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select><br><br>
+
+        <label for="position">Position:</label>
+        <select id="position" name="position" required>
+            <!-- Positions will be dynamically loaded from the API -->
+        </select><br><br>
+
+        <label for="birthdate">Birthdate:</label>
+        <input type="date" id="birthdate" name="birthdate" required><br><br>
+
+        <button type="submit">Add Employee</button>
+    </form>
+
+    <!-- ตารางแสดงข้อมูลพนักงาน -->
+    <table id="employee-table" border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Position</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- ข้อมูลพนักงานจะถูกแสดงที่นี่ -->
+        </tbody>
+    </table>
+
+    <script>
+        // ตรวจสอบว่า JWT ถูกเก็บใน localStorage หรือไม่
+        const jwt = localStorage.getItem('jwt');
+        if (!jwt) {
+            // ถ้าไม่มี JWT ให้รีไดเร็กต์ไปยังหน้า login
+            window.location.href = 'login.html';
+        } else {
+            // ใช้ JWT สำหรับการตรวจสอบสิทธิ์
+            document.getElementById('login-status').innerText = 'Logged in successfully';
+
+            // ดึงข้อมูลจาก API และแสดงในตาราง
+            fetchEmployees();
+        }
+
+        // ฟังก์ชันดึงข้อมูลพนักงานจาก API
+        function fetchEmployees() {
+            fetch('get_employees.php', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${jwt}`  // ส่ง JWT ไปใน headers
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.employees) {
+                    const tableBody = document.querySelector('#employee-table tbody');
+                    tableBody.innerHTML = '';  // ล้างข้อมูลเดิม
+
+                    // แสดงข้อมูลพนักงานในตาราง
+                    data.employees.forEach(employee => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${employee.id}</td>
+                            <td>${employee.first_name}</td>
+                            <td>${employee.last_name}</td>
+                            <td>${employee.position}</td>
+                            <td>
+                                <button onclick="editEmployee(${employee.id})">Edit</button>
+                                <button onclick="deleteEmployee(${employee.id})">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    alert('No employees found.');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching employees:', error);
+                alert('Failed to fetch employees.');
+            });
+        }
+
+        // ฟังก์ชันสำหรับการแก้ไขข้อมูลพนักงาน (สามารถเชื่อมต่อกับฟอร์มแก้ไขได้)
+        function editEmployee(id) {
+            alert('Edit employee with ID: ' + id);
+            // สามารถพัฒนาเพิ่มเติมเพื่อแสดงฟอร์มแก้ไข
+        }
+
+        // ฟังก์ชันสำหรับการลบพนักงาน
+        function deleteEmployee(id) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                fetch(`delete_employee.php?id=${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${jwt}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Employee deleted');
+                        fetchEmployees();  // รีเฟรชตาราง
+                    } else {
+                        alert('Failed to delete employee');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting employee:', error);
+                    alert('Failed to delete employee.');
+                });
+            }
+        }
+
+        // ฟังก์ชันเปิดหน้า Add Employee
+        document.getElementById('add-employee-btn').addEventListener('click', function() {
+            window.location.href = 'add_employee.html';  // ไปยังฟอร์มเพิ่มพนักงาน
+        });
+    </script>
+</body>
+</html>
