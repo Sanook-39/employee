@@ -1,8 +1,11 @@
 <?php
-require_once 'vendor/autoload.php';
+// require_once 'vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 use \Firebase\JWT\JWT;
-include 'config_1.php';
-include 'config.php';
+// include 'config_1.php';
+// include 'config.php';
+include __DIR__ . '/../config_1.php';
+include __DIR__ . '/../config.php';
 
 // ฟังก์ชันตรวจสอบ JWT
 function isValidJWT($jwt) {
@@ -45,21 +48,20 @@ if (!$decoded) {
     exit;
 }
 
-// ตรวจสอบว่าเรามี ID ของพนักงานหรือไม่
+// ตรวจสอบว่ามีการส่ง ID ของพนักงานมาหรือไม่
 if (isset($_GET['id'])) {
     $employee_id = $_GET['id'];
 
     try {
-        // ค้นหาข้อมูลพนักงาน
-        $stmt = $pdo->prepare("SELECT * FROM employees WHERE id = :id");
+        // คำสั่ง SQL เพื่อลบพนักงาน
+        $stmt = $pdo->prepare("DELETE FROM employees WHERE id = :id");
         $stmt->bindParam(':id', $employee_id, PDO::PARAM_INT);
-        $stmt->execute();
-        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($employee) {
-            echo json_encode(['success' => true, 'employee' => $employee]);
+        // Execute การลบ
+        if ($stmt->execute()) {
+            echo json_encode(['success' => true, 'message' => 'Employee deleted successfully']);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Employee not found']);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete employee']);
         }
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);

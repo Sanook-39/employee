@@ -11,9 +11,17 @@
     <!-- <h1>Employee Management</h1> -->
 
     <div id="login-status"></div>
-    <h1>จัดการข้อมูลพนักงาน</h1>
-    <button id="logout-btn" class="btn btn-danger">Logout</button>
-
+   
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h1>จัดการข้อมูลพนักงาน</h1>
+            </div>
+            <div class="col-md-4">
+                <button id="logout-btn" class="btn btn-danger">ออกจากระบบ</button>
+            </div>
+        </div>
+    </div>
    <!-- Form for adding employee -->
    <form id="addEmployeeForm">
     <div class="container">
@@ -21,7 +29,7 @@
             <!-- First Name -->
             <div class="col-md-4">
                 <div class="form-group">
-                    <label for="firstName">First Name:</label>
+                    <label for="firstName">ชื่อ:</label>
                     <input type="text" id="firstName" name="first_name" class="form-control" required>
                 </div>
             </div>
@@ -29,7 +37,7 @@
             <!-- Last Name -->
             <div class="col-md-4">
                 <div class="form-group">
-                    <label for="lastName">Last Name:</label>
+                    <label for="lastName">นามสกุล:</label>
                     <input type="text" id="lastName" name="last_name" class="form-control" required>
                 </div>
             </div>
@@ -37,7 +45,7 @@
             <!-- Gender -->
             <div class="col-md-4">
                 <div class="form-group">
-                    <label for="gender">Gender:</label>
+                    <label for="gender">เพศ:</label>
                     <select id="gender" name="gender" class="form-control" required>
                         <option value="ชาย">ชาย</option>
                         <option value="หญิง">หญิง</option>
@@ -50,7 +58,7 @@
             <!-- Position -->
             <div class="col-md-4">
                 <div class="form-group">
-                    <label for="position">Position:</label>
+                    <label for="position">ตำแหน่ง:</label>
                     <select id="position" name="position" class="form-control" required>
                         <!-- Positions will be dynamically loaded from the API -->
                     </select>
@@ -60,7 +68,7 @@
             <!-- Birthdate -->
             <div class="col-md-4">
                 <div class="form-group">
-                    <label for="birthdate">Birthdate:</label>
+                    <label for="birthdate">วันเกิด:</label>
                     <input type="date" id="birthdate" name="birthdate" class="form-control" required>
                 </div>
             </div>
@@ -68,7 +76,7 @@
             <!-- Submit Button -->
             <div class="col-md-4">
                 <div class="form-group" style="padding-top: 25px;">
-                    <button type="submit" class="btn btn-primary">Add Employee</button>
+                    <button type="submit" class="btn btn-primary">เพิ่มพนักงาน</button>
                 </div>
             </div>
         </div>
@@ -79,12 +87,12 @@
     <div class="col-md-8"></div>
     <div class="col-md-2">
         <div class="form-group" >
-            <input type="text" id="searchInput" placeholder="Search by Name or Position" class="form-control">
+            <input type="text" id="searchInput" placeholder="ค้นหาพนักงาน" class="form-control">
         </div>
     </div>
     <div class="col-md-2">
         <div class="form-group">
-    <button id="searchBtn" class="btn btn-primary">Search</button>
+    <button id="searchBtn" class="btn btn-primary">ค้นหา</button>
 </div>
     </div>
 </div>
@@ -96,10 +104,11 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Position</th>
-                <th>Actions</th>
+                <th>ชื่อ</th>
+                <th>นามสกุล</th>
+                <th>เพศ</th>
+                <th>ตำแหน่ง</th>
+                <th>จัดการ</th>
             </tr>
         </thead>
         <tbody>
@@ -122,7 +131,7 @@ if (!jwt) {
 
 // Fetch employee data
 function fetchEmployees() {
-    fetch('get_employees.php', {
+    fetch('api/get_employees.php', {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${jwt}`
@@ -139,10 +148,11 @@ function fetchEmployees() {
                     <td>${employee.id}</td>
                     <td>${employee.first_name}</td>
                     <td>${employee.last_name}</td>
+                    <td>${employee.gender}</td>
                     <td>${employee.position_name}</td>
                     <td>
-                        <button onclick="editEmployee(${employee.id})">Edit</button>
-                        <button onclick="deleteEmployee(${employee.id})">Delete</button>
+                        <button class="btn btn-primary" onclick="editEmployee(${employee.id})">แก้ไขข้อมูล</button>
+                        <button  class="btn btn-primary"  onclick="deleteEmployee(${employee.id})">ลบข้อมูล</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -159,7 +169,7 @@ function fetchEmployees() {
 
 // Fetch positions for the position dropdown
 function fetchPositions() {
-    fetch('get_positions.php', {
+    fetch('http://localhost/employee/api/get_positions.php', {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${jwt}`
@@ -198,7 +208,7 @@ document.getElementById('addEmployeeForm').addEventListener('submit', function(e
     const employeeId = event.target.dataset.employeeId; // Check if it's an update
 
     // If employeeId exists, we're updating, otherwise adding
-    const url = employeeId ? 'update_employee.php' : 'add_employee.php';
+    const url = employeeId ? '/employee/api/update_employee.php' : '/employee/api/add_employee.php';
     const method = employeeId ? 'POST' : 'POST';
 
     fetch(url, {
@@ -227,7 +237,7 @@ document.getElementById('addEmployeeForm').addEventListener('submit', function(e
 
 // Edit employee function
 function editEmployee(id) {
-    fetch(`get_employee_edit.php?id=${id}`, {
+    fetch(`http://localhost/employee/api/get_employee_edit.php?id=${id}`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${jwt}`
@@ -245,7 +255,7 @@ function editEmployee(id) {
             
             // Change form to "Update"
             document.getElementById('addEmployeeForm').dataset.employeeId = id;
-            document.querySelector('button[type="submit"]').textContent = 'Update Employee';
+            document.querySelector('button[type="submit"]').textContent = 'บันทึก';
         } else {
             alert('Employee not found!');
         }
@@ -259,7 +269,7 @@ function editEmployee(id) {
 // Delete employee function
 function deleteEmployee(id) {
     if (confirm('Are you sure you want to delete this employee?')) {
-        fetch(`delete_employee.php?id=${id}`, {
+        fetch(`http://localhost/employee/api/delete_employee.php?id=${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${jwt}`
@@ -302,7 +312,7 @@ document.getElementById('searchBtn').addEventListener('click', function() {
 
 // ฟังก์ชันค้นหาพนักงาน
 function searchEmployees(searchTerm) {
-    fetch(`search_employees.php?search=${searchTerm}`, {
+    fetch(`http://localhost/employee/api/search_employees.php?search=${searchTerm}`, {
         method: 'GET',
         headers: {
             'Authorization': `Bearer ${jwt}`
@@ -340,8 +350,8 @@ function displayEmployees(data) {
                 <td>${employee.last_name}</td>
                 <td>${employee.position_name}</td>
                 <td>
-                    <button onclick="editEmployee(${employee.id})">Edit</button>
-                    <button onclick="deleteEmployee(${employee.id})">Delete</button>
+                    <button class="btn btn-primary" onclick="editEmployee(${employee.id})">แก้ไขข้อมูล</button>
+                    <button class="btn btn-primary" onclick="deleteEmployee(${employee.id})">ลบข้อมูล</button>
                 </td>
             `;
             tableBody.appendChild(row);

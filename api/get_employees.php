@@ -1,10 +1,14 @@
 <?php
-require_once 'vendor/autoload.php';
+// require_once 'vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use \Firebase\JWT\JWT;
 
-include 'config_1.php';
-include 'config.php';
+// include 'config_1.php';
+// include 'config.php';
+include __DIR__ . '/../config_1.php';
+include __DIR__ . '/../config.php';
+
 
 // ฟังก์ชันตรวจสอบ JWT
 function isValidJWT($jwt)
@@ -44,7 +48,7 @@ if (!$decoded) {
 
 // ค้นหาข้อมูลพนักงานจากฐานข้อมูล
 try {
-    $stmt = $pdo->prepare("SELECT e.id, e.first_name, e.last_name, p.position_name 
+    $stmt = $pdo->prepare("SELECT e.id, e.first_name, e.last_name,e.gender, p.position_name 
             FROM employees e
             JOIN position p ON e.position = p.id");
     $stmt->execute();

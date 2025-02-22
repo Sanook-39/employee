@@ -1,8 +1,11 @@
 <?php
-require_once 'vendor/autoload.php';
+// require_once 'vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 use \Firebase\JWT\JWT;
-include 'config_1.php';
-include 'config.php';
+// include 'config_1.php';
+// include 'config.php';
+include __DIR__ . '/../config_1.php';
+include __DIR__ . '/../config.php';
 
 // ฟังก์ชันตรวจสอบ JWT
 function isValidJWT($jwt) {

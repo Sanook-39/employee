@@ -4,8 +4,10 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Authorization, Content-Type');
 
-require 'config.php'; // ไฟล์เชื่อมต่อ Database
-require 'auth.php'; // ตรวจสอบ JWT
+// require 'config.php'; // ไฟล์เชื่อมต่อ Database
+// require 'auth.php'; // ตรวจสอบ JWT
+include __DIR__ . '/../config_1.php';
+include __DIR__ . '/../config.php';
 
 // ตรวจสอบ Token
 $user = verifyJWT();

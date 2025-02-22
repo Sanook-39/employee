@@ -1,14 +1,15 @@
 <?php
-require_once 'vendor/autoload.php';
-
+// require_once 'vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 use \Firebase\JWT\JWT;
+// include 'config_1.php';
+// include 'config.php';
+include __DIR__ . '/../config_1.php';
+include __DIR__ . '/../config.php';
 
-include 'config_1.php';
-include 'config.php';
 
 // ฟังก์ชันตรวจสอบ JWT
-function isValidJWT($jwt)
-{
+function isValidJWT($jwt) {
     global $pdo;
 
     if (!$jwt) {
@@ -16,9 +17,9 @@ function isValidJWT($jwt)
     }
 
     try {
-        // ตรวจสอบ JWT
+        // ตรวจสอบ JWT โดยไม่ต้องส่ง array ของอัลกอริธึม
         $decoded = JWT::decode($jwt, "your_secret_key", ['HS256']);
-
+        
         // ตรวจสอบว่า token หมดอายุหรือไม่
         if (isset($decoded->exp) && $decoded->exp < time()) {
             return false;  // หมดอายุแล้ว
@@ -48,24 +49,14 @@ if (!$decoded) {
     exit;
 }
 
-// ตรวจสอบว่าเรามีคำค้นหาหรือไม่
-if (isset($_GET['search'])) {
-    $searchTerm = '%' . $_GET['search'] . '%';
-    try {
-        $stmt = $pdo->prepare("
-            SELECT e.id, e.first_name, e.last_name, p.position_name 
-            FROM employees e
-            JOIN position p ON e.position = p.id
-            WHERE e.first_name LIKE :search OR e.last_name LIKE :search OR p.position_name LIKE :search
-        ");
-        $stmt->bindParam(':search', $searchTerm, PDO::PARAM_STR);
-        $stmt->execute();
-        $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// ค้นหาข้อมูลตำแหน่งจากฐานข้อมูล
+try {
+    $stmt = $pdo->prepare("SELECT * FROM position WHERE status = 1");
+    $stmt->execute();
+    $position = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode(['employees' => $employees]);
-    } catch (PDOException $e) {
-        echo json_encode(['message' => 'Error searching employees']);
-    }
-} else {
-    echo json_encode(['message' => 'No search term provided']);
+    echo json_encode(['position' => $position]);
+} catch (PDOException $e) {
+    echo json_encode(['message' => 'Error fetching position']);
 }
+?>
