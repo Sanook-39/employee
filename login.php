@@ -34,10 +34,9 @@ function login($username, $password) {
         $payload = array(
             "id" => $user['id'],
             "username" => $user['username'],
-            "exp" => time() + 3600  // JWT หมดอายุใน 1 ชั่วโมง
+            "exp" => time() + 100000  // JWT หมดอายุใน 1 ชั่วโมง
         );
 
-        // เพิ่มพารามิเตอร์ 'HS256' เพื่อระบุอัลกอริธึมที่ใช้
         $jwt = JWT::encode($payload, $key, 'HS256');
         return $jwt;
     }
@@ -62,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo json_encode(['jwt' => $jwt, 'redirect' => 'add_user.html']);
     } else {
         http_response_code(401);
-        echo json_encode(['message' => 'Invalid credentials']);
+        echo json_encode(['message' => 'Invalid credentials'.$password]);
     }
 }
 ?>
